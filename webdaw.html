@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web DAW with Piano Roll</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #282c34;
+            color: white;
+        }
+
+        #app {
+            text-align: center;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #oscillatorSettings, #pianoRoll, #effectsSettings {
+            margin-top: 20px;
+        }
+
+        #stepSequencer {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .step, .note {
+            margin: 1px;
+            width: 30px;
+            height: 30px;
+            background-color: #444;
+            border: 1px solid #333;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .step.active, .note.active {
+            background-color: #1e90ff;
+        }
+
+        .note-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .note-label {
+            width: 40px;
+            text-align: right;
+            margin-right: 5px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .slider-container label {
+            margin-right: 10px;
+            width: 100px; /* Ensure labels are aligned */
+            text-align: right;
+        }
+
+        .slider-container input[type="range"] {
+            width: 400px;
+            margin: 0 10px;
+        }
+
+        .slider-container button {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #ddd;
+            height: 8px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background: #1e90ff;
+            height: 20px;
+            width: 20px;
+            margin-top: -6px;
+            border-radius: 50%;
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: #ddd;
+            height: 8px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            background: #1e90ff;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+        }
+
+        input[type="range"]::-ms-track {
+            background: #ddd;
+            height: 8px;
+            border: none;
+        }
+
+        input[type="range"]::-ms-thumb {
+            background: #1e90ff;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            margin-top: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            background: #1e90ff;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+        }
+
+        input[type="range"]:focus {
+            outline: none;
+        }
+
+        input[type="range"]:focus::-webkit-slider-runnable-track {
+            background: #ccc;
+        }
+
+        input[type="range"]:focus::-moz-range-track {
+            background: #ccc;
+        }
+
+        input[type="range"]:focus::-ms-fill-lower {
+            background: #ccc;
+        }
+
+        input[type="range"]:focus::-ms-fill-upper {
+            background: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Web DAW with Piano Roll</h1>
+        <button id="playButton">Play</button>
+        <button id="stopButton">Stop</button>
+        <div id="oscillatorSettings">
+            <div class="slider-container">
+                <label for="frequency">Frequency: </label>
+                <input type="range" id="frequency" min="20" max="2000" value="440" step="1" list="tickmarks">
+                <datalist id="tickmarks">
+                    <option value="20" label="20Hz"></option>
+                    <option value="200" label="200Hz"></option>
+                    <option value="440" label="440Hz"></option>
+                    <option value="1000" label="1kHz"></option>
+                    <option value="2000" label="2kHz"></option>
+                </datalist>
+                <button id="freqMinus">-</button>
+                <button id="freqPlus">+</button>
+            </div>
+        </div>
+        <div id="effectsSettings">
+            <div class="slider-container">
+                <label for="distortion">Distortion: </label>
+                <input type="range" id="distortion" min="0" max="1" step="0.01" value="0">
+            </div>
+            <div class="slider-container">
+                <label for="chorus">Chorus: </label>
+                <input type="range" id="chorus" min="0" max="1" step="0.01" value="0">
+            </div>
+            <div class="slider-container">
+                <label for="delay">Delay: </label>
+                <input type="range" id="delay" min="0" max="1" step="0.01" value="0">
+            </div>
+            <div class="slider-container">
+                <label for="reverb">Reverb: </label>
+                <input type="range" id="reverb" min="0" max="1" step="0.01" value="0">
+            </div>
+        </div>
+        <div id="pianoRoll">
+            <h2>Piano Roll</h2>
+            <div id="stepSequencer">
+                <!-- Step sequencer buttons will go here -->
+            </div>
+            <div id="notes">
+                <!-- Dynamically generated piano roll will go here -->
+            </div>
+        </div>
+        <div id="sequencer">
+            <button id="startSequencer">Start Sequencer</button>
+            <button id="stopSequencer">Stop Sequencer</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.39/Tone.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const playButton = document.getElementById('playButton');
+            const stopButton = document.getElementById('stopButton');
+            const frequencySlider = document.getElementById('frequency');
+            const freqMinusButton = document.getElementById('freqMinus');
+            const freqPlusButton = document.getElementById('freqPlus');
+            const distortionSlider = document.getElementById('distortion');
+            const chorusSlider = document.getElementById('chorus');
+            const delaySlider = document.getElementById('delay');
+            const reverbSlider = document.getElementById('reverb');
+            const startSequencerButton = document.getElementById('startSequencer');
+            const stopSequencerButton = document.getElementById('stopSequencer');
+            const stepSequencerContainer = document.getElementById('stepSequencer');
+            const notesContainer = document.getElementById('notes');
+
+            let oscillator = null;
+            let distortion = new Tone.Distortion(0).toDestination();
+            let chorus = new Tone.Chorus(4, 2.5, 0.5).toDestination();
+            let delay = new Tone.FeedbackDelay(0.2).toDestination();
+            let reverb = new Tone.Reverb().toDestination();
+            let effectsChain = [distortion, chorus, delay, reverb];
+            
+            let sequence = Array(16).fill(false);
+            let stepButtons = [];
+            const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+            const pianoRoll = Array(16).fill().map(() => Array(notes.length).fill(false));
+
+            const createStepButtons = () => {
+                for (let i = 0; i < 16; i++) {
+                    const button = document.createElement('button');
+                    button.classList.add('step');
+                    button.innerText = i + 1;
+                    button.addEventListener('click', () => {
+                        button.classList.toggle('active');
+                        sequence[i] = !sequence[i];
+                    });
+                    stepSequencerContainer.appendChild(button);
+                    stepButtons.push(button);
+                }
+            };
+
+            const createPianoRoll = () => {
+                notes.forEach((note, noteIndex) => {
+                    const row = document.createElement('div');
+                    row.classList.add('note-row');
+                    
+                    const label = document.createElement('div');
+                    label.classList.add('note-label');
+                    label.innerText = note;
+                    row.appendChild(label);
+
+                    for (let i = 0; i < 16; i++) {
+                        const noteButton = document.createElement('div');
+                        noteButton.classList.add('note');
+                        noteButton.addEventListener('click', () => {
+                            noteButton.classList.toggle('active');
+                            pianoRoll[i][noteIndex] = !pianoRoll[i][noteIndex];
+                        });
+                        row.appendChild(noteButton);
+                    }
+                    notesContainer.appendChild(row);
+                });
+            };
+
+            createStepButtons();
+            createPianoRoll();
+
+            playButton.addEventListener('click', () => {
+                if (!oscillator) {
+                    oscillator = new Tone.Oscillator(frequencySlider.value, "sine").chain(...effectsChain).toDestination();
+                    oscillator.start();
+                }
+            });
+            
+            stopButton.addEventListener('click', () => {
+                if (oscillator) {
+                    oscillator.stop();
+                    oscillator = null;
+                }
+            });
+            
+            frequencySlider.addEventListener('input', (event) => {
+                if (oscillator) {
+                    oscillator.frequency.value = event.target.value;
+                }
+            });
+
+            freqMinusButton.addEventListener('click', () => {
+                let currentFreq = parseFloat(frequencySlider.value);
+                frequencySlider.value = currentFreq - 5;
+                frequencySlider.dispatchEvent(new Event('input'));
+            });
+
+            freqPlusButton.addEventListener('click', () => {
+                let currentFreq = parseFloat(frequencySlider.value);
+                frequencySlider.value = currentFreq + 5;
+                frequencySlider.dispatchEvent(new Event('input'));
+            });
+
+            distortionSlider.addEventListener('input', (event) => {
+                distortion.distortion = event.target.value;
+            });
+
+            chorusSlider.addEventListener('input', (event) => {
+                chorus.depth = event.target.value;
+            });
+
+            delaySlider.addEventListener('input', (event) => {
+                delay.delayTime.value = event.target.value;
+            });
+
+            reverbSlider.addEventListener('input', (event) => {
+                reverb.decay = event.target.value;
+            });
+
+            const synth = new Tone.Synth().toDestination();
+
+            let index = 0;
+            const repeat = (time) => {
+                let step = index % 16;
+                stepButtons.forEach((button, i) => {
+                    button.classList.toggle('active', i === step);
+                });
+                pianoRoll[step].forEach((isActive, noteIndex) => {
+                    if (isActive) {
+                        synth.triggerAttackRelease(notes[noteIndex], "8n", time);
+                    }
+                });
+                index++;
+            };
+
+            const sequencer = new Tone.Loop(repeat, "16n");
+
+            startSequencerButton.addEventListener('click', () => {
+                if (Tone.Transport.state !== "started") {
+                    Tone.Transport.start();
+                    sequencer.start(0);
+                }
+            });
+
+            stopSequencerButton.addEventListener('click', () => {
+                if (Tone.Transport.state === "started") {
+                    Tone.Transport.stop();
+                    sequencer.stop();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
